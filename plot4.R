@@ -12,13 +12,13 @@ tail(data)
 
 png(filename="plot4.png")
 par(mfrow=c(2,2),mar=c(5,4,2,1))
-with(data, plot(Date_Time,Global_active_power,main="", type="l",
+with(data, plot(Date_Time,Global_active_power,type="l",
                 xlab="",ylab="Global Active Power"))
 
 with(data, plot(Date_Time,Voltage,main="", type="l",
                 xlab="datetime",ylab="Voltage"))
 
-with(data, plot(Date_Time,Sub_metering_1,main="plot3", type="l",
+with(data, plot(Date_Time,Sub_metering_1,type="l",
                 xlab="",ylab="Energy sub metering"))
 with(data, lines(Date_Time,Sub_metering_2, col="red"))
 with(data, lines(Date_Time,Sub_metering_3, col="blue"))
