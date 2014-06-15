@@ -1,0 +1,125 @@
+PeerAssessment1
+====================
+Loading the activity data set into R.
+
+```{r Loading, echo= TRUE}
+data_raw <- read.csv("activity.csv", header= T, sep= ",", 
+                     na.strings= "NA", stringsAsFactors= F)
+data_raw$date <- as.Date(data_raw$date,format= "%Y-%m-%d")
+dim(data_raw)
+```
+Removing the missing values from the data set to create new clean data set
+```{r echo = TRUE}
+data <- data_raw[complete.cases(data_raw),]
+dim(data)
+```
+1. What is mean total number of steps taken per day?
+
+1.1. Histogram of the total number of steps taken each day
+
+```{r histogram_1, echo= TRUE}
+library(plyr)
+data_sum <- ddply(data, .(date), summarize, TotalSteps_perday= sum(steps))
+hist(data_sum[,2], col= "red", main= ""
+     ,xlab="Total number of steps taken each day")
+```
+
+1.2. The mean and median total number of steps taken per day reported below.
+
+```{r mean_median, echo= TRUE}
+mean_steps_perday <- mean(data_sum[,2])
+mean_steps_perday
+median_steps_perday <- median(data_sum[,2])
+median_steps_perday
+```
+
+2. What is the average daily activity pattern?
+2.1.  Time series plot of the 5-minute interval(x-axis) vs.the average number of steps taken, averaged across all days (y-axis).
+
+```{r Time_series_plot, echo=TRUE}
+data_plot <- ddply(data, .(interval), summarize, 
+                   AvgSteps_alldays= mean(steps))
+par(mar=c(5,6,4,2))
+plot(data_plot$interval,data_plot$AvgSteps_alldays, type="l",
+     xlab="5-minute interval",ylab="Average number of steps taken, 
+     averaged across all days", main="Time series plot", col ="blue")
+abline(v=data_plot[data_plot$AvgSteps_alldays==max(data_plot$AvgSteps_alldays),][1],lwd =1, col="red")
+```
+
+2.2.  5-minute interval, on average across all the days in the dataset, containing the maximum number of steps
+
+```{r 5-minute interval with max steps, echo=TRUE}
+interval_with_max_steps <- data_plot[data_plot$AvgSteps_alldays==max(data_plot$AvgSteps_alldays),]
+interval_with_max_steps
+```
+
+3. Imputing missing values
+3.1. Number of rows with missing values
+
+```{r missing row, echo=TRUE}
+missing_rows <- nrow(data_raw)-sum(complete.cases(data_raw))
+missing_rows
+```
+
+3.2 Imputing the data to create new data set. 
+I decided to use the mean for that 5-minute interval to impute the missing value.
+
+
+```{r new data set, echo=TRUE}
+data_missing <- data_raw[which(is.na(data_raw$steps)),]
+data_imputed <- merge(data_missing,data_plot,by.x="interval",by.y="interval")
+data_1 <- data_imputed[order(data_imputed$date),c(4,3,1)]
+names(data_1) <- c("steps","date","interval")
+data_new <- rbind(data,data_1)       
+data_new <- data_new[order(data_new$date),]
+dim(data_new)
+
+```
+
+3.3.1. Histogram for new data set
+
+```{r histogram_2, echo= TRUE}
+library(plyr)
+data_hist2 <- ddply(data_new, .(date), summarize, TotalSteps_perday= sum(steps))
+hist(data_hist2[,2], col= "red", main= ""
+     ,xlab="Total number of steps taken each day")
+```
+
+3.3.1.2 Mean and media for new data set
+
+```{r mean_median2, echo= TRUE}
+mean2_steps_perday <- mean(data_hist2[,2])
+mean2_steps_perday
+median2_steps_perday <- median(data_hist2[,2])
+median2_steps_perday
+```
+ We can  notice that value of the mean didn't change since I imputed the missing values with the mean value for 5-minute interval. But as the median is the 50% percentile value, due to increase in number of observations it changed slightly.
+ 
+Are there differences in activity patterns between weekdays and weekends?
+```{r final plot, echo=TRUE}
+data_new$day <-weekdays(data_new$date, abbreviate =T)
+var <- numeric()
+for(i in 1:nrow(data_new)){
+        if(data_new[i,4] %in% c("Mon","Tue","Wed","Thu","Fri")){var[i]=1}
+        else{var[i]=0}
+} 
+var.f <- factor(var, labels = c("Weekday", "Weekend"))
+data_new1 <- cbind(data_new, var.f)
+
+data1 <- ddply(data_new1, .(var.f,interval), summarize, 
+               mean= round(mean(steps),2))
+library(lattice)
+xyplot(mean ~ interval|var.f,data = data1, type = "l",
+       ylab="Number of Steps")
+
+```
+
+
+
+
+
+
+
+
+
+
